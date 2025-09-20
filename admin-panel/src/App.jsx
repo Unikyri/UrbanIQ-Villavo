@@ -99,15 +99,19 @@ function App() {
   };
 
   const renderPage = () => {
-    switch(currentPage) {
-        case 'dashboard':
-            return <DashboardPage />;
-        case 'fleet':
-            return <FleetPage />;
-        default:
-            return <DashboardPage />;
-    }
-  };
+        switch (currentPage) {
+            case 'dashboard':
+                return <DashboardPage />;
+            case 'fleet':
+                return <FleetPage />;
+            case 'map':
+                return <Map />;
+            case 'reports':
+                return <ReportsPage />;
+            default:
+                return <DashboardPage />;
+        }
+    };
 
   if (loading) {
     return (
@@ -136,9 +140,9 @@ function App() {
     
     // Dashboard principal (temporal)
     return (
-      <DashboardLayout onNavigate={setCurrentPage} currentPage={currentPage}>
-        {renderPage()}
-      </DashboardLayout>
+        <DashboardLayout onNavigate={setCurrentPage} currentPage={currentPage}>
+            {renderPage()}
+        </DashboardLayout>
     );
   }
 

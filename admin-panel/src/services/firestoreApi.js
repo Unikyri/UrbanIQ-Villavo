@@ -262,4 +262,25 @@ export const assignDriverToVehicle = async (vehicleId, driverId, oldDriverId) =>
         throw e;
     }
 };
+
+/**
+ * Guarda una nueva ruta en Firestore.
+ * @param {string} companyId El ID de la empresa a la que pertenece la ruta.
+ * @param {string} routeName El nombre de la ruta.
+ * @param {Array} routePoints Los puntos de la polilínea.
+ */
+export const saveRoute = async (companyId, routeName, routePoints) => {
+    try {
+        const docRef = await addDoc(collection(db, "routes"), {
+            name: routeName,
+            companyId: companyId,
+            points: routePoints
+        });
+        console.log("Ruta guardada con ID:", docRef.id);
+        return { success: true, id: docRef.id };
+    } catch (e) {
+        console.error("Error al guardar la ruta:", e);
+        throw e;
+    }
+};
 /*La función createDriver crea una contraseña temporal.*/
