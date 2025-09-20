@@ -2,10 +2,16 @@ import React, { useState, useEffect } from 'react';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import SurveyPage from './pages/SurveyPage';
-import Logo from './components/common/Logo';
+import DashboardPage from './pages/DashboardPage';
+import FleetPage from './pages/FleetPage';
 import AuthLayout from './components/common/AuthLayout';
+import DashboardLayout from './components/common/DashboardLayout';
+import Logo from './components/common/Logo';
 import { loginUser, registerUser } from "./services/authService.js";
 import { onAuthStateChanged, getAuth } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from './config/firebase';
+import { saveCompanyData } from './services/firestoreApi';
 
 function App() {
   const [isLogin, setIsLogin] = useState(true);
@@ -13,28 +19,26 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [currentPage, setCurrentPage] = useState('dashboard');
 
   // Escuchar cambios en el estado de autenticación
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Usuario autenticado
+        // Usuario autenticado, ahora verificamos si ya completó la encuesta
         setUser({
           uid: firebaseUser.uid,
           email: firebaseUser.email
         });
-        console.log('Usuario autenticado:', firebaseUser.email);
-
-        // TODO: Implementar lógica de verificación de encuesta (Tarea 1.6)
-        // Por ahora, asumimos que siempre necesita la encuesta después del login
-        setNeedsOnboarding(true);
-
+        
+        const onboardingStatus = await checkOnboardingStatus(firebaseUser.uid);
+        setNeedsOnboarding(!onboardingStatus);
+        
       } else {
         // Usuario no autenticado
         setUser(null);
         setNeedsOnboarding(false);
-        console.log('Usuario no autenticado');
       }
       setLoading(false);
     });
@@ -43,11 +47,21 @@ function App() {
     return () => unsubscribe();
   }, []);
 
+  const checkOnboardingStatus = async (userId) => {
+    try {
+        const companyRef = doc(db, 'companies', userId);
+        const companySnap = await getDoc(companyRef);
+        return companySnap.exists();
+    } catch (error) {
+        console.error("Error al verificar estado de la encuesta:", error);
+        return false;
+    }
+  };
+
   const handleLogin = async (formData) => {
     try {
       setAuthError(null);
       await loginUser(formData.email, formData.password);
-      
     } catch (error) {
       console.error('Error en handleLogin:', error);
       setAuthError(error.message);
@@ -59,7 +73,6 @@ function App() {
     try {
       setAuthError(null);
       await registerUser(formData.email, formData.password);
-      
     } catch (error) {
       console.error('Error en handleRegister:', error);
       setAuthError(error.message);
@@ -68,24 +81,32 @@ function App() {
   };
   
   const handleSurveySubmit = async (formData) => {
-      // TODO: Implementar lógica para guardar la encuesta en Firestore (Tarea 1.6)
-      console.log('Datos de la encuesta enviados:', formData);
-      setNeedsOnboarding(false); // Simula que la encuesta ya fue completada
-  };
-
-  const handleLogout = async () => {
-    try {
-      const auth = getAuth();
-      await auth.signOut();
-      alert('Sesión cerrada exitosamente');
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-    }
+      try {
+          setLoading(true);
+          await saveCompanyData(user.uid, formData);
+          setNeedsOnboarding(false);
+      } catch (error) {
+          console.error('Error al enviar la encuesta:', error);
+          alert('Hubo un error al guardar los datos. Por favor, inténtalo de nuevo.');
+      } finally {
+          setLoading(false);
+      }
   };
 
   const toggleMode = () => {
     setIsLogin(!isLogin);
     setAuthError(null);
+  };
+
+  const renderPage = () => {
+    switch(currentPage) {
+        case 'dashboard':
+            return <DashboardPage />;
+        case 'fleet':
+            return <FleetPage />;
+        default:
+            return <DashboardPage />;
+    }
   };
 
   if (loading) {
@@ -107,7 +128,7 @@ function App() {
         <AuthLayout>
           <Logo />
           <div style={{ marginTop: '2rem' }}>
-            <SurveyPage onSubmit={handleSurveySubmit} />
+            <SurveyPage onSubmit={handleSurveySubmit} loading={loading} />
           </div>
         </AuthLayout>
       );
@@ -115,15 +136,9 @@ function App() {
     
     // Dashboard principal (temporal)
     return (
-      <AuthLayout>
-        <div style={{ backgroundColor: 'white', borderRadius: '1rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid #f3f4f6', padding: '2rem', textAlign: 'center' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: '600', color: '#111827', marginBottom: '1rem' }}>¡Bienvenido al Panel de Urbaniq! 🎉</h2>
-          <p style={{ color: '#6b7280', marginBottom: '1.5rem' }}>Usuario: {user.email}</p>
-          <p style={{ color: '#059669', fontWeight: '500', marginBottom: '2rem', padding: '1rem', backgroundColor: '#ecfdf5', borderRadius: '0.5rem', border: '1px solid #a7f3d0' }}>✅ Autenticación con Firebase funcionando correctamente</p>
-          <p style={{ color: '#dc2626', marginBottom: '1.5rem' }}>📋 <strong>Próximo paso:</strong> Implementar encuesta de caracterización (Tarea 1.5)</p>
-          <button onClick={handleLogout} style={{ padding: '0.75rem 1.5rem', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: '500', transition: 'background-color 0.2s' }} onMouseEnter={(e) => e.target.style.backgroundColor = '#dc2626'} onMouseLeave={(e) => e.target.style.backgroundColor = '#ef4444'}>Cerrar Sesión</button>
-        </div>
-      </AuthLayout>
+      <DashboardLayout onNavigate={setCurrentPage} currentPage={currentPage}>
+        {renderPage()}
+      </DashboardLayout>
     );
   }
 
