@@ -1,0 +1,103 @@
+---
+alwaysApply: true
+---
+
+# Technology Stack & Build System
+
+## Architecture
+- **Pattern**: MVVM + Clean Architecture (Presentation → Domain → Data layers)
+- **Language**: Kotlin
+- **UI Framework**: Jetpack Compose with Material Design 3
+- **Dependency Injection**: Hilt
+
+## Core Dependencies
+- **Firebase**: Firestore (real-time database), Auth (user authentication)
+- **Google Services**: Maps SDK, Play Services Location, ML Kit Barcode Scanning
+- **AI Integration**: Gemini API for intelligent route recommendations
+- **Async Programming**: Kotlin Coroutines with Flow for reactive streams
+- **Accessibility**: Android TTS/STT for voice navigation
+
+## Build System
+- **Gradle**: Kotlin DSL (build.gradle.kts)
+- **Version Catalog**: libs.versions.toml for centralized dependency management
+- **Target SDK**: 34, Min SDK: 26, Compile SDK: 36
+
+## Key Configuration
+- Package namespace: `com.hackathon.urbaniq.pasajero`
+- Secrets management: `local.properties` for API keys (GEMINI_API_KEY)
+- ProGuard enabled for release builds
+- Compose compiler extension: 1.5.8
+
+## Common Commands
+```bash
+# Build debug APK
+./gradlew assembleDebug
+
+# Run unit tests
+./gradlew test
+
+# Run instrumented tests
+./gradlew connectedAndroidTest
+
+# Clean build
+./gradlew clean
+
+# Install debug build
+./gradlew installDebug
+```
+
+## Development Setup Requirements
+- Android Studio with Kotlin plugin
+- Google Services JSON file (google-services.json)
+- Gemini API key in local.properties
+- Firebase project configuration
+- Google Maps API key setup# Technology Stack & Build System
+
+## Architecture
+- **Pattern**: MVVM + Clean Architecture (Presentation → Domain → Data layers)
+- **Language**: Kotlin
+- **UI Framework**: Jetpack Compose with Material Design 3
+- **Dependency Injection**: Hilt
+
+## Core Dependencies
+- **Firebase**: Firestore (real-time database), Auth (user authentication)
+- **Google Services**: Maps SDK, Play Services Location, ML Kit Barcode Scanning
+- **AI Integration**: Gemini API for intelligent route recommendations
+- **Async Programming**: Kotlin Coroutines with Flow for reactive streams
+- **Accessibility**: Android TTS/STT for voice navigation
+
+## Build System
+- **Gradle**: Kotlin DSL (build.gradle.kts)
+- **Version Catalog**: libs.versions.toml for centralized dependency management
+- **Target SDK**: 34, Min SDK: 26, Compile SDK: 36
+
+## Key Configuration
+- Package namespace: `com.hackathon.urbaniq.pasajero`
+- Secrets management: `local.properties` for API keys (GEMINI_API_KEY)
+- ProGuard enabled for release builds
+- Compose compiler extension: 1.5.8
+
+## Common Commands
+```bash
+# Build debug APK
+./gradlew assembleDebug
+
+# Run unit tests
+./gradlew test
+
+# Run instrumented tests
+./gradlew connectedAndroidTest
+
+# Clean build
+./gradlew clean
+
+# Install debug build
+./gradlew installDebug
+```
+
+## Development Setup Requirements
+- Android Studio with Kotlin plugin
+- Google Services JSON file (google-services.json)
+- Gemini API key in local.properties
+- Firebase project configuration
+- Google Maps API key setup

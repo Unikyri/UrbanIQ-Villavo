@@ -1,0 +1,441 @@
+---
+alwaysApply: true
+---
+
+# Plan de Implementación - App del Pasajero Urbaniq
+
+- [ ] 1. Configurar estructura del proyecto y dependencias base
+  - Crear estructura de paquetes siguiendo Clean Architecture (data, domain, presentation)
+  - Configurar Hilt para inyección de dependencias con módulos base
+  - Implementar clases de configuración para Firebase y Google Maps
+  - _Requerimientos: Todos los requerimientos base_
+
+- [ ] 2. Implementar modelos de datos y entidades del dominio
+  - [ ] 2.1 Crear entidades principales del dominio
+    - Implementar data classes para Vehicle, Route, Transaction, User
+    - Definir enums para VehicleType, TransactionStatus
+    - Crear value objects para LatLng, MeetingPoint
+    - _Requerimientos: 1.1, 1.3, 3.1, 8.1_
+
+  - [ ] 2.2 Implementar modelos de estado UI
+    - Crear data classes para MapUiState, WalletUiState, ChatUiState
+    - Implementar sealed classes para manejo de errores
+    - Definir estados de carga y error para cada pantalla
+    - _Requerimientos: 1.1, 3.1, 4.1, 5.1_
+
+- [ ] 3. Crear interfaces de repositorios y casos de uso
+  - [ ] 3.1 Definir interfaces de repositorios
+    - Crear VehicleRepository interface con métodos para obtener vehículos
+    - Implementar RouteRepository interface para gestión de rutas
+    - Definir WalletRepository interface para operaciones de billetera
+    - Crear LocationRepository interface para servicios de ubicación
+    - _Requerimientos: 1.1, 1.2, 2.1, 3.1_
+
+  - [ ] 3.2 Implementar casos de uso principales
+    - Crear CalculateOptimalMeetingPointUseCase para cálculo de puntos de encuentro
+    - Implementar CalculateETAUseCase para estimación de tiempos
+    - Desarrollar ProcessPaymentUseCase para manejo de pagos
+    - Crear GetVehiclesInRadiusUseCase para filtrado por proximidad
+    - _Requerimientos: 1.4, 1.5, 3.4, 3.5, 6.1, 7.1_
+
+- [ ] 4. Implementar repositorios de datos con Firebase
+  - [ ] 4.1 Crear VehicleRepositoryImpl
+    - Implementar conexión a Firestore para colección de vehículos
+    - Desarrollar queries en tiempo real para vehículos activos
+    - Implementar filtrado por tipo y radio de distancia
+    - Agregar manejo de errores y reconexión automática
+    - _Requerimientos: 1.1, 1.2, 6.1_
+
+  - [ ] 4.2 Implementar WalletRepositoryImpl
+    - Crear operaciones CRUD para billetera de usuario
+    - Implementar registro de transacciones en Firestore
+    - Desarrollar validación de saldo antes de pagos
+    - Agregar sincronización offline-first
+    - _Requerimientos: 3.1, 3.5, 8.1, 8.2_
+
+  - [ ] 4.3 Desarrollar RouteRepositoryImpl
+    - Implementar carga de rutas desde Firestore
+    - Crear caché local para rutas frecuentemente usadas
+    - Desarrollar parsing de polylines para visualización
+    - _Requerimientos: 2.1, 2.2, 2.3_
+
+- [ ] 5. Crear servicios de ubicación y mapas
+  - [ ] 5.1 Implementar LocationRepositoryImpl
+    - Configurar Google Play Services Location para obtener ubicación
+    - Implementar seguimiento de ubicación en tiempo real
+    - Agregar manejo de permisos de ubicación
+    - Desarrollar fallbacks para cuando GPS no esté disponible
+    - _Requerimientos: 1.1, 1.4, 6.2_
+
+  - [ ] 5.2 Crear utilidades de cálculo geoespacial
+    - Implementar algoritmo para encontrar punto más cercano en polyline
+    - Desarrollar cálculo de distancia entre coordenadas
+    - Crear funciones para estimación de ETA basada en velocidad promedio
+    - _Requerimientos: 1.4, 1.5, 6.1, 6.2_
+
+- [ ] 6. Desarrollar integración con Gemini AI
+  - [ ] 6.1 Crear GeminiRepositoryImpl
+    - Implementar cliente HTTP para API de Gemini
+    - Desarrollar formateo de prompts con contexto de rutas
+    - Crear parsing de respuestas de IA para extraer recomendaciones
+    - Agregar manejo de rate limiting y errores de API
+    - _Requerimientos: 4.2, 4.3, 4.4, 4.5_
+
+  - [ ] 6.2 Implementar ChatUseCase
+    - Crear lógica para procesar consultas de usuario
+    - Desarrollar formateo de contexto (ubicación, destino, rutas disponibles)
+    - Implementar parsing de respuestas para mostrar rutas sugeridas
+    - _Requerimientos: 4.2, 4.3, 4.4, 4.5_
+
+- [ ] 7. Crear ViewModels para manejo de estado
+  - [ ] 7.1 Implementar MapViewModel
+    - Desarrollar gestión de estado del mapa (vehículos, filtros, selección)
+    - Implementar lógica para cálculo de puntos de encuentro y ETA
+    - Crear manejo de actualizaciones en tiempo real de vehículos
+    - Agregar validación de proximidad para habilitar pagos
+    - _Requerimientos: 1.1, 1.2, 1.3, 1.4, 6.1, 7.1, 7.2_
+
+  - [ ] 7.2 Crear WalletViewModel
+    - Implementar gestión de estado de billetera y transacciones
+    - Desarrollar lógica de recarga simulada para MVP
+    - Crear manejo de proceso de pago con validaciones
+    - Agregar gestión de historial de transacciones
+    - _Requerimientos: 3.1, 3.2, 3.5, 8.1, 8.2, 8.3_
+
+  - [ ] 7.3 Desarrollar ChatViewModel
+    - Crear gestión de estado de conversación con IA
+    - Implementar manejo de entrada de texto y voz
+    - Desarrollar formateo de respuestas para UI
+    - _Requerimientos: 4.1, 4.2, 4.4, 5.3_
+
+- [ ] 8. Implementar pantallas principales con Jetpack Compose
+  - [ ] 8.1 Crear MapScreen
+    - Desarrollar composable principal con Google Maps
+    - Implementar overlays para mostrar vehículos en tiempo real
+    - Crear bottom sheet para información de vehículo seleccionado
+    - Agregar botones de filtro y FAB para chatbot
+    - Implementar indicadores visuales para punto de encuentro y ETA
+    - _Requerimientos: 1.1, 1.2, 1.3, 1.4, 6.3_
+
+  - [ ] 8.2 Desarrollar WalletScreen
+    - Crear UI para mostrar saldo actual y botón de recarga
+    - Implementar lista de transacciones con detalles
+    - Desarrollar integración con escáner QR
+    - Agregar estados de carga y error
+    - _Requerimientos: 3.1, 3.2, 3.3, 8.2_
+
+  - [ ] 8.3 Implementar ChatScreen
+    - Crear interfaz de chat con burbujas de mensajes
+    - Desarrollar input field con soporte para texto y voz
+    - Implementar indicadores de escritura y estados de carga
+    - Agregar botones para acciones rápidas
+    - _Requerimientos: 4.1, 4.2, 5.3_
+
+- [ ] 9. Crear funcionalidad de escaneo QR y pagos
+  - [ ] 9.1 Implementar QRScannerScreen
+    - Desarrollar composable con CameraX para escaneo
+    - Crear overlay con guías visuales para QR
+    - Implementar detección y parsing de códigos QR de vehículos
+    - Agregar manejo de permisos de cámara
+    - _Requerimientos: 3.3, 3.4_
+
+  - [ ] 9.2 Desarrollar PaymentConfirmationScreen
+    - Crear UI para confirmación de pago con detalles
+    - Implementar validación de proximidad antes de mostrar
+    - Desarrollar animaciones de éxito/error post-pago
+    - Agregar feedback háptico para confirmaciones
+    - _Requerimientos: 3.4, 3.5, 7.2_
+
+- [ ] 10. Implementar sistema de accesibilidad completo
+  - [ ] 10.1 Crear AccessibilityManager
+    - Implementar integración con Text-to-Speech del sistema
+    - Desarrollar Speech-to-Text para comandos de voz
+    - Crear sistema de anuncios automáticos para eventos importantes
+    - Implementar configuración de velocidad y tono de voz
+    - _Requerimientos: 5.1, 5.2, 5.3, 6.3_
+
+  - [ ] 10.2 Adaptar UI para accesibilidad
+    - Agregar content descriptions a todos los elementos visuales
+    - Implementar navegación por TalkBack optimizada
+    - Crear tema de alto contraste y texto grande
+    - Desarrollar shortcuts de teclado para acciones principales
+    - _Requerimientos: 5.4_
+
+- [ ] 11. Crear navegación y estructura principal de la app
+  - [ ] 11.1 Implementar MainActivity y navegación
+    - Desarrollar MainActivity con Compose Navigation
+    - Crear bottom navigation bar para pantallas principales
+    - Implementar manejo de deep links
+    - Agregar gestión de permisos en tiempo de ejecución
+    - _Requerimientos: Todos los requerimientos de navegación_
+
+  - [ ] 11.2 Desarrollar SettingsScreen
+    - Crear pantalla de configuración con toggle de accesibilidad
+    - Implementar preferencias de usuario persistentes
+    - Desarrollar sección de información de cuenta
+    - Agregar opciones de tema y personalización
+    - _Requerimientos: 5.1_
+
+- [ ] 12. Implementar manejo robusto de errores y estados
+  - [ ] 12.1 Crear sistema de manejo de errores
+    - Implementar sealed classes para diferentes tipos de error
+    - Desarrollar ErrorHandler centralizado con retry automático
+    - Crear UI components para mostrar errores user-friendly
+    - Agregar logging detallado para debugging
+    - _Requerimientos: 8.3_
+
+  - [ ] 12.2 Desarrollar gestión de estados offline
+    - Implementar caché local para datos críticos
+    - Crear sincronización automática cuando vuelva conectividad
+    - Desarrollar indicadores UI para estado de conexión
+    - _Requerimientos: Todos los requerimientos de conectividad_
+
+- [ ] 13. Crear tests unitarios y de integración
+  - [ ] 13.1 Implementar tests para ViewModels
+    - Crear tests unitarios para MapViewModel con datos mock
+    - Desarrollar tests para WalletViewModel incluyendo casos de error
+    - Implementar tests para ChatViewModel con respuestas simuladas
+    - _Requerimientos: Validación de todos los requerimientos_
+
+  - [ ] 13.2 Desarrollar tests para casos de uso
+    - Crear tests para CalculateOptimalMeetingPointUseCase
+    - Implementar tests para ProcessPaymentUseCase con diferentes escenarios
+    - Desarrollar tests para cálculos de ETA y proximidad
+    - _Requerimientos: 1.4, 1.5, 3.5, 6.1, 7.1_
+
+- [ ] 14. Integrar y probar funcionalidades end-to-end
+  - [ ] 14.1 Implementar flujo completo de viaje estándar
+    - Integrar MapScreen con selección de vehículo y cálculo de ETA
+    - Conectar proceso de pago desde proximidad hasta confirmación
+    - Probar actualizaciones en tiempo real de ubicaciones
+    - _Requerimientos: 1.1, 1.3, 1.4, 3.4, 3.5, 6.1, 7.2_
+
+  - [ ] 14.2 Probar flujo completo de asistente IA
+    - Integrar ChatScreen con Gemini API para consultas reales
+    - Probar sugerencias de rutas con y sin transbordos
+    - Validar respuestas de IA y manejo de errores
+    - _Requerimientos: 4.1, 4.2, 4.4, 4.5_
+
+  - [ ] 14.3 Validar funcionalidad de accesibilidad completa
+    - Probar navegación completa usando solo TalkBack
+    - Validar comandos de voz para todas las acciones principales
+    - Probar anuncios automáticos de ETA y eventos importantes
+    - _Requerimientos: 5.1, 5.2, 5.3, 5.4, 6.3_# Plan de Implementación - App del Pasajero Urbaniq
+
+- [ ] 1. Configurar estructura del proyecto y dependencias base
+  - Crear estructura de paquetes siguiendo Clean Architecture (data, domain, presentation)
+  - Configurar Hilt para inyección de dependencias con módulos base
+  - Implementar clases de configuración para Firebase y Google Maps
+  - _Requerimientos: Todos los requerimientos base_
+
+- [ ] 2. Implementar modelos de datos y entidades del dominio
+  - [ ] 2.1 Crear entidades principales del dominio
+    - Implementar data classes para Vehicle, Route, Transaction, User
+    - Definir enums para VehicleType, TransactionStatus
+    - Crear value objects para LatLng, MeetingPoint
+    - _Requerimientos: 1.1, 1.3, 3.1, 8.1_
+
+  - [ ] 2.2 Implementar modelos de estado UI
+    - Crear data classes para MapUiState, WalletUiState, ChatUiState
+    - Implementar sealed classes para manejo de errores
+    - Definir estados de carga y error para cada pantalla
+    - _Requerimientos: 1.1, 3.1, 4.1, 5.1_
+
+- [ ] 3. Crear interfaces de repositorios y casos de uso
+  - [ ] 3.1 Definir interfaces de repositorios
+    - Crear VehicleRepository interface con métodos para obtener vehículos
+    - Implementar RouteRepository interface para gestión de rutas
+    - Definir WalletRepository interface para operaciones de billetera
+    - Crear LocationRepository interface para servicios de ubicación
+    - _Requerimientos: 1.1, 1.2, 2.1, 3.1_
+
+  - [ ] 3.2 Implementar casos de uso principales
+    - Crear CalculateOptimalMeetingPointUseCase para cálculo de puntos de encuentro
+    - Implementar CalculateETAUseCase para estimación de tiempos
+    - Desarrollar ProcessPaymentUseCase para manejo de pagos
+    - Crear GetVehiclesInRadiusUseCase para filtrado por proximidad
+    - _Requerimientos: 1.4, 1.5, 3.4, 3.5, 6.1, 7.1_
+
+- [ ] 4. Implementar repositorios de datos con Firebase
+  - [ ] 4.1 Crear VehicleRepositoryImpl
+    - Implementar conexión a Firestore para colección de vehículos
+    - Desarrollar queries en tiempo real para vehículos activos
+    - Implementar filtrado por tipo y radio de distancia
+    - Agregar manejo de errores y reconexión automática
+    - _Requerimientos: 1.1, 1.2, 6.1_
+
+  - [ ] 4.2 Implementar WalletRepositoryImpl
+    - Crear operaciones CRUD para billetera de usuario
+    - Implementar registro de transacciones en Firestore
+    - Desarrollar validación de saldo antes de pagos
+    - Agregar sincronización offline-first
+    - _Requerimientos: 3.1, 3.5, 8.1, 8.2_
+
+  - [ ] 4.3 Desarrollar RouteRepositoryImpl
+    - Implementar carga de rutas desde Firestore
+    - Crear caché local para rutas frecuentemente usadas
+    - Desarrollar parsing de polylines para visualización
+    - _Requerimientos: 2.1, 2.2, 2.3_
+
+- [ ] 5. Crear servicios de ubicación y mapas
+  - [ ] 5.1 Implementar LocationRepositoryImpl
+    - Configurar Google Play Services Location para obtener ubicación
+    - Implementar seguimiento de ubicación en tiempo real
+    - Agregar manejo de permisos de ubicación
+    - Desarrollar fallbacks para cuando GPS no esté disponible
+    - _Requerimientos: 1.1, 1.4, 6.2_
+
+  - [ ] 5.2 Crear utilidades de cálculo geoespacial
+    - Implementar algoritmo para encontrar punto más cercano en polyline
+    - Desarrollar cálculo de distancia entre coordenadas
+    - Crear funciones para estimación de ETA basada en velocidad promedio
+    - _Requerimientos: 1.4, 1.5, 6.1, 6.2_
+
+- [ ] 6. Desarrollar integración con Gemini AI
+  - [ ] 6.1 Crear GeminiRepositoryImpl
+    - Implementar cliente HTTP para API de Gemini
+    - Desarrollar formateo de prompts con contexto de rutas
+    - Crear parsing de respuestas de IA para extraer recomendaciones
+    - Agregar manejo de rate limiting y errores de API
+    - _Requerimientos: 4.2, 4.3, 4.4, 4.5_
+
+  - [ ] 6.2 Implementar ChatUseCase
+    - Crear lógica para procesar consultas de usuario
+    - Desarrollar formateo de contexto (ubicación, destino, rutas disponibles)
+    - Implementar parsing de respuestas para mostrar rutas sugeridas
+    - _Requerimientos: 4.2, 4.3, 4.4, 4.5_
+
+- [ ] 7. Crear ViewModels para manejo de estado
+  - [ ] 7.1 Implementar MapViewModel
+    - Desarrollar gestión de estado del mapa (vehículos, filtros, selección)
+    - Implementar lógica para cálculo de puntos de encuentro y ETA
+    - Crear manejo de actualizaciones en tiempo real de vehículos
+    - Agregar validación de proximidad para habilitar pagos
+    - _Requerimientos: 1.1, 1.2, 1.3, 1.4, 6.1, 7.1, 7.2_
+
+  - [ ] 7.2 Crear WalletViewModel
+    - Implementar gestión de estado de billetera y transacciones
+    - Desarrollar lógica de recarga simulada para MVP
+    - Crear manejo de proceso de pago con validaciones
+    - Agregar gestión de historial de transacciones
+    - _Requerimientos: 3.1, 3.2, 3.5, 8.1, 8.2, 8.3_
+
+  - [ ] 7.3 Desarrollar ChatViewModel
+    - Crear gestión de estado de conversación con IA
+    - Implementar manejo de entrada de texto y voz
+    - Desarrollar formateo de respuestas para UI
+    - _Requerimientos: 4.1, 4.2, 4.4, 5.3_
+
+- [ ] 8. Implementar pantallas principales con Jetpack Compose
+  - [ ] 8.1 Crear MapScreen
+    - Desarrollar composable principal con Google Maps
+    - Implementar overlays para mostrar vehículos en tiempo real
+    - Crear bottom sheet para información de vehículo seleccionado
+    - Agregar botones de filtro y FAB para chatbot
+    - Implementar indicadores visuales para punto de encuentro y ETA
+    - _Requerimientos: 1.1, 1.2, 1.3, 1.4, 6.3_
+
+  - [ ] 8.2 Desarrollar WalletScreen
+    - Crear UI para mostrar saldo actual y botón de recarga
+    - Implementar lista de transacciones con detalles
+    - Desarrollar integración con escáner QR
+    - Agregar estados de carga y error
+    - _Requerimientos: 3.1, 3.2, 3.3, 8.2_
+
+  - [ ] 8.3 Implementar ChatScreen
+    - Crear interfaz de chat con burbujas de mensajes
+    - Desarrollar input field con soporte para texto y voz
+    - Implementar indicadores de escritura y estados de carga
+    - Agregar botones para acciones rápidas
+    - _Requerimientos: 4.1, 4.2, 5.3_
+
+- [ ] 9. Crear funcionalidad de escaneo QR y pagos
+  - [ ] 9.1 Implementar QRScannerScreen
+    - Desarrollar composable con CameraX para escaneo
+    - Crear overlay con guías visuales para QR
+    - Implementar detección y parsing de códigos QR de vehículos
+    - Agregar manejo de permisos de cámara
+    - _Requerimientos: 3.3, 3.4_
+
+  - [ ] 9.2 Desarrollar PaymentConfirmationScreen
+    - Crear UI para confirmación de pago con detalles
+    - Implementar validación de proximidad antes de mostrar
+    - Desarrollar animaciones de éxito/error post-pago
+    - Agregar feedback háptico para confirmaciones
+    - _Requerimientos: 3.4, 3.5, 7.2_
+
+- [ ] 10. Implementar sistema de accesibilidad completo
+  - [ ] 10.1 Crear AccessibilityManager
+    - Implementar integración con Text-to-Speech del sistema
+    - Desarrollar Speech-to-Text para comandos de voz
+    - Crear sistema de anuncios automáticos para eventos importantes
+    - Implementar configuración de velocidad y tono de voz
+    - _Requerimientos: 5.1, 5.2, 5.3, 6.3_
+
+  - [ ] 10.2 Adaptar UI para accesibilidad
+    - Agregar content descriptions a todos los elementos visuales
+    - Implementar navegación por TalkBack optimizada
+    - Crear tema de alto contraste y texto grande
+    - Desarrollar shortcuts de teclado para acciones principales
+    - _Requerimientos: 5.4_
+
+- [ ] 11. Crear navegación y estructura principal de la app
+  - [ ] 11.1 Implementar MainActivity y navegación
+    - Desarrollar MainActivity con Compose Navigation
+    - Crear bottom navigation bar para pantallas principales
+    - Implementar manejo de deep links
+    - Agregar gestión de permisos en tiempo de ejecución
+    - _Requerimientos: Todos los requerimientos de navegación_
+
+  - [ ] 11.2 Desarrollar SettingsScreen
+    - Crear pantalla de configuración con toggle de accesibilidad
+    - Implementar preferencias de usuario persistentes
+    - Desarrollar sección de información de cuenta
+    - Agregar opciones de tema y personalización
+    - _Requerimientos: 5.1_
+
+- [ ] 12. Implementar manejo robusto de errores y estados
+  - [ ] 12.1 Crear sistema de manejo de errores
+    - Implementar sealed classes para diferentes tipos de error
+    - Desarrollar ErrorHandler centralizado con retry automático
+    - Crear UI components para mostrar errores user-friendly
+    - Agregar logging detallado para debugging
+    - _Requerimientos: 8.3_
+
+  - [ ] 12.2 Desarrollar gestión de estados offline
+    - Implementar caché local para datos críticos
+    - Crear sincronización automática cuando vuelva conectividad
+    - Desarrollar indicadores UI para estado de conexión
+    - _Requerimientos: Todos los requerimientos de conectividad_
+
+- [ ] 13. Crear tests unitarios y de integración
+  - [ ] 13.1 Implementar tests para ViewModels
+    - Crear tests unitarios para MapViewModel con datos mock
+    - Desarrollar tests para WalletViewModel incluyendo casos de error
+    - Implementar tests para ChatViewModel con respuestas simuladas
+    - _Requerimientos: Validación de todos los requerimientos_
+
+  - [ ] 13.2 Desarrollar tests para casos de uso
+    - Crear tests para CalculateOptimalMeetingPointUseCase
+    - Implementar tests para ProcessPaymentUseCase con diferentes escenarios
+    - Desarrollar tests para cálculos de ETA y proximidad
+    - _Requerimientos: 1.4, 1.5, 3.5, 6.1, 7.1_
+
+- [ ] 14. Integrar y probar funcionalidades end-to-end
+  - [ ] 14.1 Implementar flujo completo de viaje estándar
+    - Integrar MapScreen con selección de vehículo y cálculo de ETA
+    - Conectar proceso de pago desde proximidad hasta confirmación
+    - Probar actualizaciones en tiempo real de ubicaciones
+    - _Requerimientos: 1.1, 1.3, 1.4, 3.4, 3.5, 6.1, 7.2_
+
+  - [ ] 14.2 Probar flujo completo de asistente IA
+    - Integrar ChatScreen con Gemini API para consultas reales
+    - Probar sugerencias de rutas con y sin transbordos
+    - Validar respuestas de IA y manejo de errores
+    - _Requerimientos: 4.1, 4.2, 4.4, 4.5_
+
+  - [ ] 14.3 Validar funcionalidad de accesibilidad completa
+    - Probar navegación completa usando solo TalkBack
+    - Validar comandos de voz para todas las acciones principales
+    - Probar anuncios automáticos de ETA y eventos importantes
+    - _Requerimientos: 5.1, 5.2, 5.3, 5.4, 6.3_
