@@ -30,7 +30,7 @@ data class MapUiState(
      */
     fun getFilteredVehicles(): List<Vehicle> {
         return if (vehicleFilter != null) {
-            vehicles.filter { it.type == vehicleFilter }
+            vehicles.filter { it.vehicleType == vehicleFilter }
         } else {
             vehicles
         }

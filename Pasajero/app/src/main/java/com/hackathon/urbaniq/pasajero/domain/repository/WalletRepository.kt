@@ -12,12 +12,17 @@ interface WalletRepository {
     /**
      * Obtiene la información de la billetera del usuario
      */
-    fun getWalletInfo(userId: String): Flow<WalletInfo?>
+    suspend fun getWalletInfo(userId: String): Result<WalletInfo?>
     
     /**
      * Actualiza el saldo de la billetera
      */
     suspend fun updateBalance(userId: String, newBalance: Double): Result<Unit>
+    
+    /**
+     * Agrega fondos a la billetera
+     */
+    suspend fun addFunds(userId: String, amount: Double): Result<WalletInfo>
     
     /**
      * Procesa un pago
@@ -29,27 +34,27 @@ interface WalletRepository {
     ): Result<Transaction>
     
     /**
-     * Recarga la billetera (simulación para MVP)
-     */
-    suspend fun rechargeWallet(userId: String, amount: Double): Result<Unit>
-    
-    /**
      * Obtiene el historial de transacciones del usuario
      */
-    fun getTransactionHistory(userId: String): Flow<List<Transaction>>
+    suspend fun getTransactionHistory(userId: String): Result<List<Transaction>>
     
     /**
-     * Obtiene una transacción específica
+     * Se suscribe a actualizaciones de billetera en tiempo real
      */
-    suspend fun getTransactionById(transactionId: String): Result<Transaction?>
+    fun subscribeToWalletUpdates(userId: String): Flow<WalletInfo?>
     
     /**
-     * Cancela una transacción pendiente
+     * Valida si hay saldo suficiente para un pago
      */
-    suspend fun cancelTransaction(transactionId: String): Result<Unit>
+    suspend fun validatePayment(userId: String, amount: Double): Result<Boolean>
     
     /**
-     * Verifica si el usuario tiene suficiente saldo
+     * Obtiene el ID del usuario actual
      */
-    suspend fun hasSufficientBalance(userId: String, amount: Double): Result<Boolean>
+    suspend fun getCurrentUserId(): String?
+    
+    /**
+     * Crea una billetera por defecto para el usuario
+     */
+    suspend fun createDefaultWallet(userId: String): Result<WalletInfo>
 }

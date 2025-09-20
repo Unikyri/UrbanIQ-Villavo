@@ -4,20 +4,29 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.Timestamp
 
 /**
- * Entidad que representa un vehículo en el sistema
+ * Entidad que representa un vehículo según estructura Firestore
  */
 data class Vehicle(
-    val id: String,
-    val type: VehicleType,
-    val licensePlate: String,
-    val routeId: String?,
-    val currentLocation: LatLng,
-    val isActive: Boolean,
-    val lastUpdated: Timestamp,
-    val driverName: String? = null,
-    val capacity: Int? = null,
-    val estimatedSpeed: Double? = null // km/h
+    val id: String = "",
+    val location: LatLng = LatLng(0.0, 0.0),
+    val status: String = "inactive", // "active" o "inactive"
+    val type: String = "bus", // "bus" o "taxi"
+    val plate: String = "",
+    val driverId: String = "",
+    val companyId: String = "",
+    val routeId: String? = null // Solo para buses
 ) {
+    // Propiedades computadas para compatibilidad
+    val currentLocation: LatLng get() = location
+    val licensePlate: String get() = plate
+    val isActive: Boolean get() = status == "active"
+    val vehicleType: VehicleType get() = when (type) {
+        "bus" -> VehicleType.BUS
+        "taxi" -> VehicleType.TAXI
+        else -> VehicleType.BUS
+    }
+    val lastUpdated: Timestamp get() = Timestamp.now()
+    
     /**
      * Calcula la distancia en metros entre este vehículo y una ubicación dada
      */

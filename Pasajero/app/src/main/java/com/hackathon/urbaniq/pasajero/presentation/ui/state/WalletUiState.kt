@@ -7,13 +7,14 @@ import com.hackathon.urbaniq.pasajero.domain.model.WalletInfo
  * Estado UI para la pantalla de billetera
  */
 data class WalletUiState(
-    val walletInfo: WalletInfo? = null,
+    val balance: Double = 0.0,
     val transactions: List<Transaction> = emptyList(),
     val isLoading: Boolean = false,
-    val isRecharging: Boolean = false,
     val isProcessingPayment: Boolean = false,
+    val isPaymentEnabled: Boolean = false,
     val error: String? = null,
-    val successMessage: String? = null,
+    val lastRechargeAmount: Double? = null,
+    val lastTransaction: Transaction? = null,
     val qrScannerActive: Boolean = false,
     val scannedQrCode: String? = null
 ) {
@@ -21,21 +22,21 @@ data class WalletUiState(
      * Obtiene el saldo formateado
      */
     fun getFormattedBalance(): String {
-        return walletInfo?.getFormattedBalance() ?: "$ 0 COP"
+        return "$ ${String.format("%.0f", balance)} COP"
     }
     
     /**
      * Obtiene el saldo actual
      */
     fun getCurrentBalance(): Double {
-        return walletInfo?.balance ?: 0.0
+        return balance
     }
     
     /**
      * Verifica si hay suficiente saldo para un pago
      */
     fun hasSufficientBalance(amount: Double): Boolean {
-        return walletInfo?.hasSufficientBalance(amount) ?: false
+        return balance >= amount
     }
     
     /**
@@ -53,5 +54,5 @@ data class WalletUiState(
     /**
      * Indica si hay algún mensaje de éxito
      */
-    fun hasSuccessMessage(): Boolean = successMessage != null
+    fun hasSuccessMessage(): Boolean = lastRechargeAmount != null
 }

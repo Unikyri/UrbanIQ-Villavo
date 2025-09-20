@@ -12,12 +12,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hackathon.urbaniq.pasajero.presentation.navigation.UrbanIQNavigation
+import com.hackathon.urbaniq.pasajero.presentation.navigation.AuthNavigation
+import com.hackathon.urbaniq.pasajero.presentation.viewmodel.AuthViewModel
 import com.hackathon.urbaniq.pasajero.ui.theme.PasajeroTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
  * Actividad principal de UrbanIQ Pasajero
+ * Maneja autenticación y navegación principal
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -32,22 +37,19 @@ class MainActivity : ComponentActivity() {
     // Launcher para permisos de cámara
     private val cameraPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        handleCameraPermissionResult(granted)
+    ) { result ->
+        handleCameraPermissionResult(result)
     }
     
     // Launcher para permisos de micrófono
     private val microphonePermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        handleMicrophonePermissionResult(granted)
+    ) { result ->
+        handleMicrophonePermissionResult(result)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // Solicitar permisos esenciales al inicio
-        requestLocationPermissions()
         
         setContent {
             PasajeroTheme {
@@ -55,56 +57,64 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    UrbanIQNavigation()
+                    // Obtener AuthViewModel
+                    val authViewModel: AuthViewModel = hiltViewModel()
+                    val authState by authViewModel.uiState.collectAsStateWithLifecycle()
+                    
+                    // Mostrar navegación de auth o app principal según estado
+                    if (authState.isAuthenticated) {
+                        // Usuario autenticado - mostrar app principal
+                        UrbanIQNavigation()
+                        
+                        // Solicitar permisos necesarios después del login
+                        LaunchedEffect(authState.isAuthenticated) {
+                            requestLocationPermissions()
+                        }
+                    } else {
+                        // Usuario no autenticado - mostrar pantallas de login/registro
+                        AuthNavigation(
+                            onAuthSuccess = {
+                                // El estado se actualizará automáticamente via AuthViewModel
+                            }
+                        )
+                    }
                 }
             }
         }
     }
     
     /**
-     * Solicita permisos de ubicación si no están concedidos
+     * Solicita permisos de ubicación
      */
     private fun requestLocationPermissions() {
-        val fineLocationGranted = ContextCompat.checkSelfPermission(
-            this, Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PermissionChecker.PERMISSION_GRANTED
+        val locationPermissions = arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
         
-        val coarseLocationGranted = ContextCompat.checkSelfPermission(
-            this, Manifest.permission.ACCESS_COARSE_LOCATION
-        ) == PermissionChecker.PERMISSION_GRANTED
+        val needsPermission = locationPermissions.any { permission ->
+            ContextCompat.checkSelfPermission(this, permission) != PermissionChecker.PERMISSION_GRANTED
+        }
         
-        if (!fineLocationGranted || !coarseLocationGranted) {
-            locationPermissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
-            )
+        if (needsPermission) {
+            locationPermissionLauncher.launch(locationPermissions)
         }
     }
     
     /**
-     * Solicita permiso de cámara cuando sea necesario
+     * Solicita permisos de cámara para QR scanner
      */
-    fun requestCameraPermission() {
-        val cameraGranted = ContextCompat.checkSelfPermission(
-            this, Manifest.permission.CAMERA
-        ) == PermissionChecker.PERMISSION_GRANTED
-        
-        if (!cameraGranted) {
+    private fun requestCameraPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PermissionChecker.PERMISSION_GRANTED) {
             cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
     
     /**
-     * Solicita permiso de micrófono cuando sea necesario
+     * Solicita permisos de micrófono para comandos de voz
      */
-    fun requestMicrophonePermission() {
-        val microphoneGranted = ContextCompat.checkSelfPermission(
-            this, Manifest.permission.RECORD_AUDIO
-        ) == PermissionChecker.PERMISSION_GRANTED
-        
-        if (!microphoneGranted) {
+    private fun requestMicrophonePermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PermissionChecker.PERMISSION_GRANTED) {
             microphonePermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
     }
@@ -112,36 +122,49 @@ class MainActivity : ComponentActivity() {
     /**
      * Maneja el resultado de permisos de ubicación
      */
-    private fun handleLocationPermissionResult(permissions: Map<String, Boolean>) {
-        val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
-        val coarseLocationGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+    private fun handleLocationPermissionResult(result: Map<String, Boolean>) {
+        val fineLocationGranted = result[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+        val coarseLocationGranted = result[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
         
-        if (fineLocationGranted || coarseLocationGranted) {
-            // Permisos concedidos
-        } else {
-            // Permisos denegados - manejar caso
+        when {
+            fineLocationGranted -> {
+                // Permiso de ubicación precisa otorgado
+                // La app puede usar GPS
+            }
+            coarseLocationGranted -> {
+                // Solo ubicación aproximada otorgada
+                // La app puede usar ubicación de red
+            }
+            else -> {
+                // Permisos de ubicación denegados
+                // Mostrar explicación al usuario sobre por qué son necesarios
+            }
         }
     }
     
     /**
-     * Maneja el resultado de permiso de cámara
+     * Maneja el resultado de permisos de cámara
      */
     private fun handleCameraPermissionResult(granted: Boolean) {
         if (granted) {
-            // Permiso de cámara concedido
+            // Permiso de cámara otorgado
+            // El usuario puede usar el escáner QR
         } else {
-            // Permiso de cámara denegado
+            // Permiso denegado
+            // Mostrar mensaje explicativo
         }
     }
     
     /**
-     * Maneja el resultado de permiso de micrófono
+     * Maneja el resultado de permisos de micrófono
      */
     private fun handleMicrophonePermissionResult(granted: Boolean) {
         if (granted) {
-            // Permiso de micrófono concedido
+            // Permiso de micrófono otorgado
+            // El usuario puede usar comandos de voz
         } else {
-            // Permiso de micrófono denegado
+            // Permiso denegado
+            // Deshabilitar funciones de voz
         }
     }
 }

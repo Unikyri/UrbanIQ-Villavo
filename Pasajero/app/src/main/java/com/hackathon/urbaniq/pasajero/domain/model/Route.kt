@@ -3,26 +3,27 @@ package com.hackathon.urbaniq.pasajero.domain.model
 import com.google.android.gms.maps.model.LatLng
 
 /**
- * Entidad que representa una ruta de transporte público
+ * Entidad que representa una ruta según estructura Firestore
  */
 data class Route(
-    val id: String,
-    val name: String,
-    val description: String?,
-    val polyline: List<LatLng>,
-    val color: String, // Color hex para mostrar en el mapa
-    val isActive: Boolean,
-    val estimatedDuration: Long? = null, // Duración estimada en minutos
-    val operatingHours: String? = null, // Ej: "05:00-22:00"
-    val frequency: Int? = null // Frecuencia en minutos
+    val id: String = "",
+    val name: String = "",
+    val path: List<LatLng> = emptyList(), // Lista de geopoints que forman la ruta
+    val fare: Double = 0.0 // Costo del pasaje para esta ruta
 ) {
+    // Propiedades computadas para compatibilidad
+    val polyline: List<LatLng> get() = path
+    val color: String get() = "#2196F3" // Color azul por defecto
+    val isActive: Boolean get() = path.isNotEmpty()
+    val description: String? get() = "Ruta $name"
+    
     /**
      * Encuentra el punto más cercano en la ruta a una ubicación dada
      */
     fun findClosestPointTo(location: LatLng): LatLng? {
-        if (polyline.isEmpty()) return null
+        if (path.isEmpty()) return null
         
-        return polyline.minByOrNull { point ->
+        return path.minByOrNull { point ->
             val earthRadius = 6371000.0 // Radio de la Tierra en metros
             val dLat = Math.toRadians(location.latitude - point.latitude)
             val dLng = Math.toRadians(location.longitude - point.longitude)

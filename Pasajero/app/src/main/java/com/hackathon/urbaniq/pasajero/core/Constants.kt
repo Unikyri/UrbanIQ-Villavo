@@ -29,13 +29,23 @@ object Constants {
     const val NETWORK_TIMEOUT_SECONDS = 30L
     const val RETRY_ATTEMPTS = 3
     
+    // Payment
+    object Payment {
+        const val DEFAULT_FARE = 2500.0 // COP
+        const val PROXIMITY_THRESHOLD_METERS = 20.0
+        const val PAYMENT_TIMEOUT_SECONDS = 30L
+        const val MAX_RETRY_ATTEMPTS = 3
+        const val INITIAL_BALANCE = 15000.0 // COP
+        const val RECHARGE_AMOUNT = 10000.0 // COP
+    }
+    
     // Firebase Collections
-    object FirebaseCollections {
-        const val USERS = "users"
-        const val VEHICLES = "vehicles"
-        const val ROUTES = "routes"
-        const val TRANSACTIONS = "transactions"
-        const val REAL_TIME_LOCATIONS = "real_time_locations"
+    object Firebase {
+        const val USERS_COLLECTION = "users"
+        const val VEHICLES_COLLECTION = "vehicles"
+        const val ROUTES_COLLECTION = "routes"
+        const val TRANSACTIONS_COLLECTION = "transactions"
+        const val REAL_TIME_LOCATIONS_COLLECTION = "real_time_locations"
     }
     
     // Navegación
