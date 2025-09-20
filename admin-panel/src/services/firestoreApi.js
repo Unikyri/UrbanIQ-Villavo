@@ -283,4 +283,31 @@ export const saveRoute = async (companyId, routeName, routePoints) => {
         throw e;
     }
 };
+
+/**
+ * Obtiene todos los pagos de una empresa para el día actual.
+ * @param {string} companyId El ID de la empresa.
+ * @returns {Array} Una lista de objetos de pagos.
+ */
+export const getDailyPayments = async (companyId) => {
+    try {
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const payments = [];
+        const q = query(
+            collection(db, 'payments'), 
+            where('companyId', '==', companyId), 
+            where('timestamp', '>=', startOfToday)
+        );
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+            payments.push({ id: doc.id, ...doc.data() });
+        });
+        console.log("Pagos del día cargados:", payments);
+        return payments;
+    } catch (e) {
+        console.error("Error al obtener los pagos del día: ", e);
+        return [];
+    }
+};
 /*La función createDriver crea una contraseña temporal.*/
