@@ -1,27 +1,20 @@
-// Configuración e inicialización de Firebase
-    // Import the functions you need from the SDKs you need
-    import { initializeApp } from "firebase/app";
-    import { getAuth } from "firebase/auth";
-    import { getFirestore } from "firebase/firestore";
-    import { getAnalytics } from "firebase/analytics";
+// src/config/firebase.js
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
-    // Your web app's Firebase configuration
-    // We are reading the secure values from the .env.local file
-    const firebaseConfig = {
-      apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-      storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-      appId: import.meta.env.VITE_FIREBASE_APP_ID,
-      measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
-    };
+// Configuración directa (temporal para desarrollo)
+const firebaseConfig = {
+  apiKey: "AIzaSyDPnz38MkxkeExovNAL-Eg2FyE1_PRfmqw",
+  authDomain: "villavo-conecta.firebaseapp.com",
+  projectId: "villavo-conecta",
+  storageBucket: "villavo-conecta.firebasestorage.app", 
+  messagingSenderId: "1099063898387",
+  appId: "1:1099063898387:web:ca93b6263ee44997efeae6",
+  measurementId:"G-0EJ6LM5YKC"
+};
 
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-
-    // Export the services you'll need in other parts of the app
-    export const auth = getAuth(app);
-    export const db = getFirestore(app);
-    export const analytics = getAnalytics(app);
-    
+const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export default app;
