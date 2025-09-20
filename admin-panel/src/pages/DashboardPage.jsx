@@ -17,7 +17,7 @@ const DashboardPage = () => {
             return;
         }
 
-        const fetchAllData = async () => {
+        const fetchAllData = () => {
             // Lectura en tiempo real de vehículos
             const vehiclesQuery = query(collection(db, 'vehicles'), where('companyId', '==', companyId));
             const unsubscribeVehicles = onSnapshot(vehiclesQuery, (querySnapshot) => {
@@ -46,8 +46,10 @@ const DashboardPage = () => {
                 const fetchedPayments = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 setPayments(fetchedPayments);
                 console.log("Pagos del día cargados:", fetchedPayments);
-                setLoading(false);
             });
+
+            // Mueve esta línea para que se ejecute después de configurar todos los listeners
+            setLoading(false); 
 
             return () => {
                 unsubscribeVehicles();
@@ -58,6 +60,8 @@ const DashboardPage = () => {
 
         fetchAllData();
     }, [companyId]);
+    
+    // El resto del código es el mismo...
 
     const activeDrivers = drivers.filter(d => d.status === 'active');
     const activeVehicles = vehicles.filter(v => v.status === 'active');

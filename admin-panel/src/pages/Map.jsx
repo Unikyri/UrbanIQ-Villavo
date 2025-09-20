@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
 import { db } from '../config/firebase';
-import { collection, query, where, onSnapshot, doc } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
-import { saveRoute } from '../services/firestoreApi'; // Importamos la nueva función
+import { collection, query, where, onSnapshot, doc, setDoc, addDoc } from 'firebase/firestore';
+import { authService } from '../services/authService';
 
 const Map = () => {
     const mapRef = useRef(null);
@@ -15,16 +14,34 @@ const Map = () => {
     const [newRouteName, setNewRouteName] = useState('');
     const [drawnPolyline, setDrawnPolyline] = useState(null);
     const [loading, setLoading] = useState(false);
-    const auth = getAuth();
-    const companyId = auth.currentUser ? auth.currentUser.uid : null;
+    const [currentUser, setCurrentUser] = useState(null);
+    
     const mapInstance = useRef(null);
     const drawingManagerRef = useRef(null);
     const markers = useRef({});
     const infoWindow = useRef(null);
     const routePolylines = useRef({});
 
+    // Obtener usuario actual
+    useEffect(() => {
+        const unsubscribe = authService.onAuthStateChange((user) => {
+            setCurrentUser(user);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    // Verificar API key
+    useEffect(() => {
+        if (!googleMapsApiKey) {
+            console.error('VITE_GOOGLE_MAPS_API_KEY no está configurada');
+            return;
+        }
+    }, [googleMapsApiKey]);
+
     // Efecto para inicializar el mapa de Google
     useEffect(() => {
+        if (!googleMapsApiKey) return;
+        
         const loader = new Loader({
             apiKey: googleMapsApiKey,
             version: 'weekly',
@@ -33,9 +50,9 @@ const Map = () => {
 
         loader.load().then(() => {
             const mapOptions = {
-                center: { lat: 4.1444, lng: -73.6105 },
+                center: { lat: 4.1444, lng: -73.6105 }, // Villavicencio
                 zoom: 12,
-                mapId: 'fleet-map-id' 
+                // Removemos mapId por ahora para evitar errores
             };
             mapInstance.current = new google.maps.Map(mapRef.current, mapOptions);
             infoWindow.current = new google.maps.InfoWindow();
@@ -47,8 +64,9 @@ const Map = () => {
 
     // Efecto para obtener los datos de la empresa
     useEffect(() => {
-        if (!companyId) return;
-        const companyRef = doc(db, "companies", companyId);
+        if (!currentUser?.uid) return;
+        
+        const companyRef = doc(db, "companies", currentUser.uid);
         const unsubscribe = onSnapshot(companyRef, (docSnap) => {
             if (docSnap.exists()) {
                 setCompanyData(docSnap.data());
@@ -57,12 +75,13 @@ const Map = () => {
             }
         });
         return () => unsubscribe();
-    }, [companyId]);
+    }, [currentUser]);
 
     // Efecto para escuchar los cambios en la ubicación de los vehículos en tiempo real
     useEffect(() => {
-        if (!companyId) return;
-        const q = query(collection(db, 'vehicles'), where('companyId', '==', companyId));
+        if (!currentUser?.uid) return;
+        
+        const q = query(collection(db, 'vehicles'), where('companyId', '==', currentUser.uid));
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
             const vehicleUpdates = [];
             querySnapshot.forEach((doc) => {
@@ -78,21 +97,25 @@ const Map = () => {
             console.error("Error al escuchar cambios en la ubicación:", error);
         });
         return () => unsubscribe();
-    }, [companyId]);
+    }, [currentUser]);
     
     // Efecto para escuchar las rutas en tiempo real (solo si la empresa es de buses)
     useEffect(() => {
-        if (!companyId || companyData?.type !== 'bus') return;
+        if (!currentUser?.uid || companyData?.type !== 'bus') return;
         
-        const q = query(collection(db, 'routes'), where('companyId', '==', companyId));
+        const q = query(collection(db, 'routes'), where('companyId', '==', currentUser.uid));
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
             const routeUpdates = [];
             querySnapshot.forEach((doc) => {
                 const routeData = doc.data();
-                const points = routeData.points.map(p => ({
-                    lat: p.latitude,
-                    lng: p.longitude
-                }));
+                // Verificar si path existe y convertir a formato correcto
+                let points = [];
+                if (routeData.path && Array.isArray(routeData.path)) {
+                    points = routeData.path.map(p => ({
+                        lat: p.latitude || p.lat,
+                        lng: p.longitude || p.lng
+                    }));
+                }
                 routeUpdates.push({
                     id: doc.id,
                     ...routeData,
@@ -105,7 +128,7 @@ const Map = () => {
             console.error("Error al escuchar rutas:", error);
         });
         return () => unsubscribe();
-    }, [companyId, companyData]);
+    }, [currentUser, companyData]);
 
     // Efecto para gestionar el dibujo de las polilíneas de las rutas
     useEffect(() => {
@@ -113,6 +136,7 @@ const Map = () => {
         
         const activeRouteIds = new Set(routes.map(r => r.id));
         
+        // Limpiar rutas que ya no existen
         Object.keys(routePolylines.current).forEach(routeId => {
             if (!activeRouteIds.has(routeId)) {
                 routePolylines.current[routeId].setMap(null);
@@ -120,19 +144,22 @@ const Map = () => {
             }
         });
 
+        // Crear o actualizar rutas
         routes.forEach(route => {
-            if (routePolylines.current[route.id]) {
-                routePolylines.current[route.id].setPath(route.points);
-            } else {
-                const polyline = new google.maps.Polyline({
-                    path: route.points,
-                    geodesic: true,
-                    strokeColor: '#2563eb',
-                    strokeOpacity: 0.8,
-                    strokeWeight: 4,
-                    map: mapInstance.current
-                });
-                routePolylines.current[route.id] = polyline;
+            if (route.points && route.points.length > 0) {
+                if (routePolylines.current[route.id]) {
+                    routePolylines.current[route.id].setPath(route.points);
+                } else {
+                    const polyline = new google.maps.Polyline({
+                        path: route.points,
+                        geodesic: true,
+                        strokeColor: '#2563eb',
+                        strokeOpacity: 0.8,
+                        strokeWeight: 4,
+                        map: mapInstance.current
+                    });
+                    routePolylines.current[route.id] = polyline;
+                }
             }
         });
     }, [routes, companyData]);
@@ -143,6 +170,7 @@ const Map = () => {
         
         const activeVehicleIds = new Set(vehicles.map(v => v.id));
         
+        // Limpiar marcadores de vehículos que ya no existen
         Object.keys(markers.current).forEach(vehicleId => {
             if (!activeVehicleIds.has(vehicleId)) {
                 markers.current[vehicleId].setMap(null);
@@ -150,9 +178,13 @@ const Map = () => {
             }
         });
 
+        // Crear o actualizar marcadores
         vehicles.forEach(vehicle => {
             if (vehicle.location) {
-                const position = new google.maps.LatLng(vehicle.location.latitude, vehicle.location.longitude);
+                const position = new google.maps.LatLng(
+                    vehicle.location.latitude, 
+                    vehicle.location.longitude
+                );
                 
                 if (markers.current[vehicle.id]) {
                     markers.current[vehicle.id].setPosition(position);
@@ -160,7 +192,13 @@ const Map = () => {
                     const marker = new google.maps.Marker({
                         position: position,
                         map: mapInstance.current,
-                        title: `Placa: ${vehicle.plate}`
+                        title: `Placa: ${vehicle.plate}`,
+                        icon: {
+                            url: vehicle.type === 'bus' ? 
+                                'https://maps.google.com/mapfiles/kml/shapes/bus.png' : 
+                                'https://maps.google.com/mapfiles/kml/shapes/taxi.png',
+                            scaledSize: new google.maps.Size(32, 32)
+                        }
                     });
                     
                     marker.addListener('click', () => {
@@ -184,7 +222,7 @@ const Map = () => {
         });
     }, [vehicles, routes]);
     
-    // Nuevo efecto para la herramienta de dibujo
+    // Efecto para la herramienta de dibujo - CORREGIDO
     useEffect(() => {
         if (!mapInstance.current || companyData?.type !== 'bus') return;
         
@@ -193,7 +231,7 @@ const Map = () => {
         }
         
         const drawingManager = new google.maps.drawing.DrawingManager({
-            drawingMode: google.maps.drawing.OverlayType.POLYGON,
+            drawingMode: null, // Iniciar sin modo de dibujo
             drawingControl: false,
             polylineOptions: {
                 strokeColor: '#ef4444',
@@ -215,17 +253,42 @@ const Map = () => {
 
         return () => {
             if (listener) google.maps.event.removeListener(listener);
-            drawingManager.setMap(null);
+            if (drawingManager) drawingManager.setMap(null);
         };
     }, [companyData]);
 
     const handleStartDrawing = () => {
+        if (!drawingManagerRef.current) {
+            console.error('Drawing manager no está inicializado');
+            return;
+        }
+        
         setIsDrawingMode(true);
         if (drawnPolyline) {
             drawnPolyline.setMap(null);
+            setDrawnPolyline(null);
         }
-        setDrawnPolyline(null); // Asegura que el estado esté limpio
         drawingManagerRef.current.setDrawingMode(google.maps.drawing.OverlayType.POLYLINE);
+    };
+
+    // Función corregida para guardar ruta
+    const saveRoute = async (companyId, routeName, routePoints) => {
+        try {
+            const routeData = {
+                name: routeName,
+                companyId: companyId,
+                path: routePoints, // Array de objetos {latitude, longitude}
+                fare: 0, // Se puede configurar después
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            await addDoc(collection(db, 'routes'), routeData);
+            console.log('Ruta guardada exitosamente');
+        } catch (error) {
+            console.error('Error guardando ruta:', error);
+            throw error;
+        }
     };
 
     const handleSaveRoute = async () => {
@@ -247,9 +310,9 @@ const Map = () => {
                 longitude: p.lng(),
             }));
 
-            await saveRoute(companyId, newRouteName, routePoints);
+            await saveRoute(currentUser.uid, newRouteName, routePoints);
             alert('¡Ruta guardada con éxito!');
-            handleCancelDrawing(); // Limpia el formulario y el dibujo
+            handleCancelDrawing();
         } catch (error) {
             alert('Error al guardar la ruta: ' + error.message);
             console.error(error);
@@ -265,8 +328,29 @@ const Map = () => {
             drawnPolyline.setMap(null);
             setDrawnPolyline(null);
         }
-        drawingManagerRef.current.setDrawingMode(null);
+        if (drawingManagerRef.current) {
+            drawingManagerRef.current.setDrawingMode(null);
+        }
     };
+
+    // Mostrar mensaje si no hay API key
+    if (!googleMapsApiKey) {
+        return (
+            <div style={{ padding: '1.5rem', textAlign: 'center' }}>
+                <h2>Configuración requerida</h2>
+                <p>Para usar el mapa, configura tu API key de Google Maps en el archivo .env:</p>
+                <code style={{ 
+                    backgroundColor: '#f3f4f6', 
+                    padding: '0.5rem', 
+                    borderRadius: '0.25rem',
+                    display: 'block',
+                    marginTop: '1rem'
+                }}>
+                    VITE_GOOGLE_MAPS_API_KEY=tu-api-key-aqui
+                </code>
+            </div>
+        );
+    }
 
     const mapContainerStyle = {
         height: 'calc(100vh - 80px)',
@@ -307,8 +391,21 @@ const Map = () => {
     };
     
     return (
-        <div style={{ padding: '1.5rem', backgroundColor: 'white', borderRadius: '1rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid #f3f4f6' }}>
-            <h1 style={{ fontSize: '1.875rem', fontWeight: '700', color: '#111827', margin: '0 0 1.5rem 0' }}>Mapa y Monitoreo</h1>
+        <div style={{ 
+            padding: '1.5rem', 
+            backgroundColor: 'white', 
+            borderRadius: '1rem', 
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', 
+            border: '1px solid #f3f4f6' 
+        }}>
+            <h1 style={{ 
+                fontSize: '1.875rem', 
+                fontWeight: '700', 
+                color: '#111827', 
+                margin: '0 0 1.5rem 0' 
+            }}>
+                Mapa y Monitoreo
+            </h1>
             
             {companyData?.type === 'bus' && (
                 <div style={uiContainerStyle}>

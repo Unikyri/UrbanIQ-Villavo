@@ -67,11 +67,11 @@ const DashboardLayout = ({ children, currentPage, onNavigate }) => {
                         <Car style={iconStyle} />
                         <span>Flota</span>
                     </div>
-                    <div style={navItemStyle(currentPage === 'map')}>
+                    <div style={navItemStyle(currentPage === 'map')} onClick={() => onNavigate('map')}>
                         <Map style={iconStyle} />
                         <span>Mapa</span>
                     </div>
-                    <div style={navItemStyle(currentPage === 'reports')}>
+                    <div style={navItemStyle(currentPage === 'reports')} onClick={() => onNavigate('reports')}>
                         <FileText style={iconStyle} />
                         <span>Reportes</span>
                     </div>
