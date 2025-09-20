@@ -1,16 +1,11 @@
 pluginManagement {
     repositories {
-        google {
-            content {
-                includeGroupByRegex("com\\.android.*")
-                includeGroupByRegex("com\\.google.*")
-                includeGroupByRegex("androidx.*")
-            }
-        }
+        google()
         mavenCentral()
         gradlePluginPortal()
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -19,6 +14,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Conductor"
-include(":app")
- 
+rootProject.name = "UrbanIQ-Villavo"
+
+include(":ConductorApp")
+project(":ConductorApp").projectDir = file("Conductor/app")
