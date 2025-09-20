@@ -1,0 +1,54 @@
+# Project Structure & Organization
+
+## Root Structure
+```
+├── app/                          # Main application module
+│   ├── src/main/java/com/hackathon/urbaniq/pasajero/
+│   ├── build.gradle.kts          # App-level build configuration
+│   ├── google-services.json      # Firebase configuration
+│   └── proguard-rules.pro        # ProGuard rules
+├── gradle/                       # Gradle wrapper and version catalog
+│   └── libs.versions.toml        # Centralized dependency versions
+├── build.gradle.kts              # Project-level build configuration
+└── settings.gradle.kts           # Project settings
+```
+
+## Clean Architecture Package Structure
+Follow this package organization within `app/src/main/java/com/hackathon/urbaniq/pasajero/`:
+
+```
+├── data/                         # Data layer
+│   ├── repository/               # Repository implementations
+│   ├── remote/                   # API clients (Firebase, Gemini)
+│   ├── local/                    # Local storage, preferences
+│   └── mapper/                   # Data transformation utilities
+├── domain/                       # Business logic layer
+│   ├── entity/                   # Core business entities
+│   ├── repository/               # Repository interfaces
+│   └── usecase/                  # Business use cases
+├── presentation/                 # UI layer
+│   ├── ui/                       # Compose screens and components
+│   │   ├── map/                  # Map screen and components
+│   │   ├── wallet/               # Wallet screen and components
+│   │   ├── chat/                 # Chat screen and components
+│   │   └── common/               # Shared UI components
+│   ├── viewmodel/                # ViewModels for state management
+│   └── navigation/               # Navigation configuration
+├── di/                           # Dependency injection modules
+└── util/                         # Utility classes and extensions
+```
+
+## Key Conventions
+- **Naming**: Use descriptive names following Kotlin conventions (PascalCase for classes, camelCase for functions)
+- **Files**: One public class per file, file name matches class name
+- **Resources**: Use snake_case for resource names (strings, drawables, layouts)
+- **Compose**: Composable functions use PascalCase, preview functions end with "Preview"
+- **ViewModels**: End with "ViewModel", use Hilt @HiltViewModel annotation
+- **Repositories**: Interface in domain layer, implementation in data layer
+- **Use Cases**: Single responsibility, named with verb (e.g., CalculateOptimalMeetingPointUseCase)
+
+## Configuration Files
+- **local.properties**: Store sensitive API keys (never commit)
+- **google-services.json**: Firebase configuration (commit to repo)
+- **proguard-rules.pro**: Code obfuscation rules for release builds
+- **AndroidManifest.xml**: App permissions and component declarations

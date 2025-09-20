@@ -1,0 +1,25 @@
+# Product Overview
+
+## UrbanIQ Passenger App
+
+UrbanIQ is a modern public transportation app for Villavicencio, Colombia, designed to solve the city's lack of fixed bus stops by providing real-time vehicle tracking, intelligent route planning, and digital payment solutions.
+
+### Core Value Proposition
+- **Real-time vehicle tracking** - See buses and taxis on an interactive map with live locations
+- **Smart meeting points** - Calculate optimal pickup locations along vehicle routes
+- **Digital wallet** - QR code-based payments eliminating cash dependency  
+- **AI route assistant** - Natural language queries for trip planning with transfer suggestions
+- **Full accessibility** - Voice navigation and TTS support for visually impaired users
+
+### Target Users
+- Daily commuters in Villavicencio
+- Tourists and occasional riders
+- Users with visual disabilities requiring accessible transportation
+- Citizens seeking reliable, modern public transit experience
+
+### Key Differentiators
+- Proximity-based payment security (only pay when within 20m of vehicle)
+- Gemini AI integration for intelligent route recommendations
+- Complete accessibility mode with voice commands and TTS
+- Real-time ETA calculations to optimal meeting points
+- Offline-first architecture with Firebase sync
