@@ -310,4 +310,26 @@ export const getDailyPayments = async (companyId) => {
         return [];
     }
 };
+
+/**
+ * Guarda los datos iniciales de la empresa después de la encuesta.
+ * @param {string} companyId El ID del usuario (uid) que será el ID del documento.
+ * @param {object} companyData Los datos de la encuesta.
+ */
+export const saveCompanySurvey = async (companyId, companyData) => {
+    try {
+        const companyRef = doc(db, "companies", companyId);
+        await setDoc(companyRef, {
+            name: companyData.companyName,
+            nit: companyData.nit,
+            type: companyData.companyType,
+            driversCount: parseInt(companyData.drivers, 10),
+            vehiclesCount: parseInt(companyData.vehicles, 10),
+        });
+        console.log("Datos de la encuesta guardados con éxito.");
+    } catch (e) {
+        console.error("Error al guardar los datos de la encuesta:", e);
+        throw new Error("No se pudo guardar la información de la empresa.");
+    }
+};
 /*La función createDriver crea una contraseña temporal.*/
